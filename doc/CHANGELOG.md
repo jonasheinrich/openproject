@@ -30,6 +30,7 @@ See doc/COPYRIGHT.rdoc for more details.
 # Changelog
 
 * `#3120` Implement a test suite the spikes can be developed against
+* `#3393` [Timelines] Filter Work Packages by Assignee
 
 ## 3.0.0pre42
 
