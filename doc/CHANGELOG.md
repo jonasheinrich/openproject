@@ -29,6 +29,7 @@ See doc/COPYRIGHT.rdoc for more details.
 
 # Changelog
 
+* `#2366` [Timelines] Add support for user deletion to timelines
 * `#3120` Implement a test suite the spikes can be developed against
 * `#3251` [Timelines] Filtering for Responsible filters everything
 
