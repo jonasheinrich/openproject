@@ -29,12 +29,12 @@
 source 'https://rubygems.org'
 
 gem "rails", "~> 3.2.16"
+gem 'subscribem', git: 'git@github.com:finnlabs/subscribem.git', branch: 'development'
 
 gem "coderay", "~> 1.0.5"
 gem "rubytree", "~> 0.8.3"
 gem "rdoc", ">= 2.4.2"
 gem 'globalize'
-
 gem 'request_store'
 
 # TODO: adds #auto_link which was deprecated in rails 3.1

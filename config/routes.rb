@@ -27,7 +27,12 @@
 # See doc/COPYRIGHT.rdoc for more details.
 #++
 
+# require 'subscribem/engine'
+require 'subscribem/constraints/subdomain_required'
+
 OpenProject::Application.routes.draw do
+  constraints(Subscribem::Constraints::SubdomainRequired) do
+
   root :to => 'welcome#index', :as => 'home'
 
   # Redirect deprecated issue links to new work packages uris
@@ -482,4 +487,9 @@ OpenProject::Application.routes.draw do
   match '/robots' => 'welcome#robots', :defaults => { :format => :txt }
   # Used for OpenID
   root :to => 'account#login'
+end
+
+mount Subscribem::Engine => "/"
+
+
 end
