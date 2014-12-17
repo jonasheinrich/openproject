@@ -1,0 +1,4923 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Openproject by jonasheinrich</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Openproject</h1>
+        <p>OpenProject is a web based project management system built on Ruby on Rails</p>
+
+        <p class="view"><a href="https://github.com/jonasheinrich/openproject">View the Project on GitHub <small>jonasheinrich/openproject</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/jonasheinrich/openproject/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/jonasheinrich/openproject/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/jonasheinrich/openproject">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p>FORMAT: 1A</p>
+
+<h1>
+<a id="openproject-api-v3" class="anchor" href="#openproject-api-v3" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenProject API v3</h1>
+
+<h1>
+<a id="group-general" class="anchor" href="#group-general" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group General</h1>
+
+<p>This is the current <strong>DRAFT</strong> of the specification for OpenProject APIv3.</p>
+
+<p>Please note that everything in this document might be <strong>subject to change</strong> in a future version of OpenProject. We intend to keep this specification
+as accurate as possible, however as long as the APIv3 is not in a stable state it is possible that there are intermediary differences between
+this specification and the real implementation. While we try to only specify what we want to keep, it might also happen that parts of this
+specification will be replaced <strong>incompatibly</strong> until the APIv3 is considered <em>stable</em>.</p>
+
+<h1>
+<a id="hypermedia" class="anchor" href="#hypermedia" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hypermedia</h1>
+
+<p>TODO: Description &amp; Resources</p>
+
+<h1>
+<a id="formats" class="anchor" href="#formats" aria-hidden="true"><span class="octicon octicon-link"></span></a>Formats</h1>
+
+<p>TODO: Description and why only JSON</p>
+
+<h1>
+<a id="haljson" class="anchor" href="#haljson" aria-hidden="true"><span class="octicon octicon-link"></span></a>HAL+JSON</h1>
+
+<p>HAL is a simple format that gives a consistent and easy way to hyperlink between resources in your API.
+Read more: <a href="http://stateless.co/hal_specification.html">http://stateless.co/hal_specification.html</a></p>
+
+<p><strong>OpenProject API implementation of HAL+JSON format</strong> enriches JSON and introduces a few meta properties:</p>
+
+<pre><code>- `_type` - specifies the type of the resource (e.g.: WorkPackage, Project)
+- `_links` - contains all links available for the resource
+- `_embedded` - contains all embedded objects
+</code></pre>
+
+<p>HAL does not guarantee that embedded resources are embedded in their full representation, they might as well be
+partially represented (e.g. some properties can be left out).
+However in this API you have the guarantee that whenever a resource is <strong>embedded</strong>, it is embedded in its <strong>full representation</strong>.</p>
+
+<h1>
+<a id="api-response-structure" class="anchor" href="#api-response-structure" aria-hidden="true"><span class="octicon octicon-link"></span></a>API response structure</h1>
+
+<p>All API responses contain a single HAL+JSON object, even collections of objects are technically represented by
+a single HAL+JSON object that itself contains its members. More details on collections can be found
+in the <a href="#collections">Collections Section</a>.</p>
+
+<h1>
+<a id="authentication" class="anchor" href="#authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authentication</h1>
+
+<p>For now the API only supports <strong>session-based authentication</strong>. This means you have to login to OpenProject via
+the Web-Interface to be authenticated in the API. This method is well-suited for clients acting within the browser,
+like the Angular-Client built into OpenProject.</p>
+
+<p>However for the future we plan to add authentication modes that are more suitable for <strong>external clients</strong> too.</p>
+
+<h1>
+<a id="allowed-http-methods" class="anchor" href="#allowed-http-methods" aria-hidden="true"><span class="octicon octicon-link"></span></a>Allowed HTTP methods</h1>
+
+<ul>
+<li>
+<code>GET</code> - Get a single resource or collection of resources</li>
+<li>
+<code>POST</code> - Create a new resource or perform</li>
+<li>
+<code>PATCH</code> - Update a resource</li>
+<li>
+<code>DELETE</code> - Delete a resource</li>
+</ul>
+
+<h1>
+<a id="group-basic-objects" class="anchor" href="#group-basic-objects" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Basic Objects</h1>
+
+<h1>
+<a id="errors" class="anchor" href="#errors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Errors</h1>
+
+<p>In case of an error, the API will respond with an apropriate HTTP status code.
+For responses with an HTTP status of <code>4xx</code> and <code>5xx</code> the body will always contain a single error object.
+Error objects shall give the client additional details about the cause of an errorneous response.</p>
+
+<h2>
+<a id="general-errors" class="anchor" href="#general-errors" aria-hidden="true"><span class="octicon octicon-link"></span></a>General errors</h2>
+
+<ul>
+<li>Error objects have their <code>_type</code> set to <code>Error</code>
+</li>
+<li>The <code>errorIdentifier</code> serves as a unique (and machine readable) identifier for a specific error cause
+
+<ul>
+<li>There <em>may</em> be multiple possible error identifiers per HTTP status code</li>
+<li>There <em>may</em> be multiple possible HTTP status codes per error identifier</li>
+<li>The "List of Error Identifiers" defines the possible mappings between HTTP status and error identifier</li>
+</ul>
+</li>
+<li>The <code>message</code> contains a human readable concise message describing the error
+
+<ul>
+<li>It <em>optionally</em> includes specific information, for example which permission would have been needed to perform an action</li>
+<li>It it localized depending on the users preferences</li>
+<li>It <em>must not</em> include HTML or other kind of markup</li>
+<li>Error messages form complete sentences including punctuation</li>
+</ul>
+</li>
+</ul>
+
+<h3>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h3>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InternalServerError",
+    "message": "An internal server error occured. This is not your fault."
+}
+</code></pre>
+
+<h2>
+<a id="embedded-error-information" class="anchor" href="#embedded-error-information" aria-hidden="true"><span class="octicon octicon-link"></span></a>Embedded error information</h2>
+
+<p>Errors might optionally contain embedded objects that contain further information.</p>
+
+<h3>
+<a id="error-details" class="anchor" href="#error-details" aria-hidden="true"><span class="octicon octicon-link"></span></a>Error details</h3>
+
+<p>Under the embedded key <code>details</code> there might be an object describing the error more verbosely. For example if the
+error affects a specific field, this field could be defined there.</p>
+
+<h4>
+<a id="example-1" class="anchor" href="#example-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h4>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:examples:ExampleError",
+    "message": "This is an example error.",
+    "_embedded": {
+        "details": {
+            "_type": "ExampleErrorDetailInformation",
+            "errorneousField": "subject"
+        }
+    }
+}
+</code></pre>
+
+<h3>
+<a id="multiple-error-objects" class="anchor" href="#multiple-error-objects" aria-hidden="true"><span class="octicon octicon-link"></span></a>Multiple error objects</h3>
+
+<p>To ease implementation of basic clients it is guaranteed that the response body always only contains a single error object.
+However it is allowed that an error object <em>embeds</em> other error objects under the key <code>errors</code>, thereby aggregating them.</p>
+
+<p>The <code>errorIdentifier</code> of such an object is always <code>urn:openproject-org:api:v3:errors:MultipleErrors</code>. The message can either describe one of the
+embedded errors or simply state that multiple errors occured.</p>
+
+<h4>
+<a id="example-2" class="anchor" href="#example-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h4>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MultipleErrors",
+    "message": "Multiple fields violated their constraints.",
+    "_embedded": {
+        "errors": [
+            {
+                "_type": "Error",
+                "errorIdentifier": "urn:openproject-org:api:v3:errors:PropertyConstraintViolation",
+                "...": "..."
+            },
+            {
+                "_type": "Error",
+                "errorIdentifier": "urn:openproject-org:api:v3:errors:PropertyConstraintViolation",
+                "...": "..."
+            }
+        ]
+    }
+}
+</code></pre>
+
+<h2>
+<a id="list-of-error-identifiers" class="anchor" href="#list-of-error-identifiers" aria-hidden="true"><span class="octicon octicon-link"></span></a>List of Error Identifiers</h2>
+
+<ul>
+<li>
+<code>urn:openproject-org:api:v3:errors:InvalidRequestBody</code> (<strong>HTTP 400</strong>) - The format of the request body did not match the servers expectation</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:InvalidRenderContext</code> (<strong>HTTP 400</strong>) - The client specified a rendering context that does not exist</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:MissingPermission</code> (<strong>HTTP 401</strong> / <strong>HTTP 403</strong>) - The client does not have the needed permissions to perform the requested action</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:NotFound</code> (<strong>HTTP 404</strong>) - Default for HTTP 404 when no further information is available</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:UpdateConflict</code> (<strong>HTTP 409</strong>) - The resource changed between GET-ing it and performing an update on it</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:PropertyIsReadOnly</code> (<strong>HTTP 422</strong>) - The client tried to set or change a property that is not writable</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:PropertyConstraintViolation</code> (<strong>HTTP 422</strong>) - The client tried to set a property to an invalid value</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:PropertyValueNotAvailableAnymore</code> (<strong>HTTP 422</strong>) - An unchanged property needs to be changed, because other changes to the resource make it unavailable</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:InternalServerError</code> (<strong>HTTP 500</strong>) - Default for HTTP 500 when no further information is available</li>
+<li>
+<code>urn:openproject-org:api:v3:errors:MultipleErrors</code> - Multiple errors occured. See the embedded <code>errors</code> array for more details.</li>
+</ul>
+
+<h1>
+<a id="formatable-text" class="anchor" href="#formatable-text" aria-hidden="true"><span class="octicon octicon-link"></span></a>Formatable Text</h1>
+
+<p>OpenProject supports text formatting in Textile. Other text formats <em>may</em> be introduced in the future.
+Properties that contain formatable text have a special representation in this API. In this specification their
+type is indicated as <code>Formatable</code>. Their representation contains the following properties:</p>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Example</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">format</td>
+<td>Indicates the formatting language of the raw text</td>
+<td>String</td>
+<td>textile</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">raw</td>
+<td>The raw text, as entered by the user</td>
+<td>String</td>
+<td><code>I *am* formatted!</code></td>
+<td>READ / WRITE</td>
+</tr>
+<tr>
+<td align="center">html</td>
+<td>The text converted to HTML according to the format</td>
+<td>String</td>
+<td><code>I &lt;strong&gt;am&lt;/strong&gt; formatted!</code></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<p><code>format</code> can as of today have one of the following values:</p>
+
+<ul>
+<li>
+<code>plain</code> - no formatting at all</li>
+<li>
+<code>textile</code> - formatting using Textile</li>
+</ul>
+
+<p>More formats might be added in the future.</p>
+
+<p>Note that <code>raw</code> is the only property supporting the <strong>write</strong> operation. A property of type <em>Formatable</em> that
+is marked as <strong>read and write</strong>, will only accept changes to the <code>raw</code> property. Changes to <code>format</code> and <code>html</code> will be <strong>silently ignored</strong>.
+It is thus sufficient to solely provide the <code>raw</code> property for changes.</p>
+
+<p>If the <em>Formatable</em> is marked as <strong>read only</strong>, the <code>raw</code> attribute also becomes <strong>read only</strong>.</p>
+
+<h4>
+<a id="example-3" class="anchor" href="#example-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h4>
+
+<pre><code>{
+    "format": "textile",
+    "raw": "I *am* formatted!",
+    "html": "I &lt;strong&gt;am&lt;/strong&gt; formatted!"
+}
+</code></pre>
+
+<h1>
+<a id="dates-times-and-durations" class="anchor" href="#dates-times-and-durations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dates, Times and Durations</h1>
+
+<p>Representation of time related values in this API is done according to <a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a>.
+In this specification the following terms will be used as type specifiers (e.g. in tables):</p>
+
+<ul>
+<li>
+<code>Date</code> - refers to an ISO 8601 date, e.g. "2014-05-21"</li>
+<li>
+<code>DateTime</code> - refers to an ISO 8601 combined date and time, e.g. "2014-05-21T13:37:00Z"</li>
+<li>
+<code>Duration</code> - refers to an ISO 8601 duration, e.g. "P1DT18H"</li>
+</ul>
+
+<h1>
+<a id="colors" class="anchor" href="#colors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Colors</h1>
+
+<p>Colors are represented in RGB using hexadecimal notation as specified in <a href="http://www.w3.org/TR/css3-color/">CSS Color Module Level 3</a>.
+That is a <code>#</code> followed by either three or six hexadecimal digits.</p>
+
+<h4>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h4>
+
+<pre><code>red:   #ff0000 or #f00
+green: #00ff00 or #0f0
+black: #000000 or #000
+white: #ffffff or #fff
+</code></pre>
+
+<h1>
+<a id="group-collections" class="anchor" href="#group-collections" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Collections</h1>
+
+<p>Whenever a client calls a resource that can return more than one element, it will receive a collection of elements.
+However as collections can become quite large, the API will <strong>not</strong> simply return a JSON array, but a special collection
+object that will contain the actual elements in its embedded property <code>elements</code>.</p>
+
+<p>Collections <em>may</em> be paginated, this means that a single response from the server will not contain all elements of the collection,
+but only a subset. In this case the client can issue further requests to retrieve the remaining elements.
+There are two ways to access the result pages of a paginated collection:</p>
+
+<ul>
+<li>offset based pagination</li>
+<li>cursor based pagination</li>
+</ul>
+
+<p>The available ways of pagination depend on the collection queried. Some collections feature no pagination at all, meaning they
+will always return all elements. Others might only offer one of the two pagination methods or both of them.
+An explanation of <a href="#collections-offset-based-pagination">offset</a> and <a href="#collections-cursor-based-pagination">cursor</a> based
+pagination can be found below the links table.</p>
+
+<p>A collection also carries meta information like the total count of elements in the collection or - in case of a paginated collection -
+the amount of elements returned in this response and action links to retrieve the remaining elements.</p>
+
+<h2>
+<a id="properties" class="anchor" href="#properties" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Availability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">total</td>
+<td>The total amount of elements available in the collection</td>
+<td>Integer</td>
+<td>always</td>
+</tr>
+<tr>
+<td align="center">pageSize</td>
+<td>Amount of elements that a response will hold</td>
+<td>Integer</td>
+<td>when paginated</td>
+</tr>
+<tr>
+<td align="center">count</td>
+<td>Actual amount of elements in this response</td>
+<td>Integer</td>
+<td>always</td>
+</tr>
+<tr>
+<td align="center">offset</td>
+<td>Amount of elements preceding the first element of this response</td>
+<td>Integer</td>
+<td>when offset based available</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="links" class="anchor" href="#links" aria-hidden="true"><span class="octicon octicon-link"></span></a>Links</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Availability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>Link to the current page in the collection</td>
+<td>always</td>
+</tr>
+<tr>
+<td align="center">changeSize</td>
+<td>Templated link to change the page size, preserving the relative position</td>
+<td>when paginated</td>
+</tr>
+<tr>
+<td align="center">filter</td>
+<td>Templated link to receive only elements matching the provided OQL query</td>
+<td>when filtering available</td>
+</tr>
+<tr>
+<td align="center">jumpTo</td>
+<td>Templated link to jump to a specified offset</td>
+<td>when offset based available</td>
+</tr>
+<tr>
+<td align="center">nextByOffset</td>
+<td>Link to retrieve the following page of elements (offset based)</td>
+<td>when offset based available</td>
+</tr>
+<tr>
+<td align="center">previousByOffset</td>
+<td>Link to retrieve the preceding page of elements (offset based)</td>
+<td>when offset based available</td>
+</tr>
+<tr>
+<td align="center">nextByCursor</td>
+<td>Link to retrieve the elements following the current page (cursor based)</td>
+<td>when cursor based available</td>
+</tr>
+<tr>
+<td align="center">previousByCursor</td>
+<td>Link to retrieve the elements preceding the current page (cursor based)</td>
+<td>when cursor based available</td>
+</tr>
+</tbody>
+</table>
+
+<h3>
+<a id="filters" class="anchor" href="#filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Filters</h3>
+
+<p>Filters are specified using the <a href="https://github.com/opf/oql">OpenProject Query Language (OQL)</a>.</p>
+
+<p>The syntax of OQL queries is explained in the <a href="http://www.rubydoc.info/github/opf/oql/dev">OQL Documentation</a>. All properties of the underlying resource can be used
+in the query, e.g. when filtering over a collection of work packages, it is possible to compare the <code>subject</code> with any value.</p>
+
+<p>Note that for linked resources you can either compare against the <strong>ID</strong> of the linked resource or against its <strong>link URL</strong>:</p>
+
+<pre><code># valid
+status == "1"
+status == "/api/v3/statuses/1"
+
+# NOT valid
+status == "New"
+</code></pre>
+
+<h2>
+<a id="offset-based-pagination-apiv3examplesoffsetpagesize" class="anchor" href="#offset-based-pagination-apiv3examplesoffsetpagesize" aria-hidden="true"><span class="octicon octicon-link"></span></a>Offset based pagination [/api/v3/examples{?offset,pageSize}]</h2>
+
+<p>Offset based pagination works by specifying two values: the <strong>offset</strong> and the <strong>pageSize</strong>. The offset determines how many elements are
+skipped before the first element that is present in the result. The page size determines how many items there will be in the result. Note
+that the server might not allow arbitrarily large page sizes, a client should therefore always check the page size accepted by the server
+using the <strong>pageSize</strong> property of the response.</p>
+
+<p>The benefit of offset based pagination is that the total number of pages can be easily determined and that it is possible to jump
+to arbitrary pages within the collection. Offset based pagination is therefore well suited when a result is displayed to the end user
+in the form of multiple pages anyway.</p>
+
+<p>A drawback of offset based pagination comes with concurrent modification of the collection. If the collection is modified
+between two page requests, it is possible that the client receives elements close to the page boundaries twice or does not see them at all.</p>
+
+<h2>
+<a id="view-offset-based-get" class="anchor" href="#view-offset-based-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>view offset based [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li><p>offset = <code>0</code> (optional, integer, <code>25</code>) ... Number of elements to skip before the first element of the response.</p></li>
+<li><p>pageSize (optional, integer, <code>25</code>) ... Number of elements to display per page.</p></li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/examples?offset=25&amp;pageSize=25" },
+        "jumpTo": {
+            "href": "/api/v3/examples?offset={offset}&amp;pageSize=25",
+            "templated": true
+        },
+        "changeSize": {
+            "href": "/api/v3/examples?offset=25&amp;pageSize={size}",
+            "templated": true
+        },
+        "previousByOffset": { "href": "/api/v3/examples?offset=0&amp;pageSize=25" },
+        "previousByCursor": { "href": "/api/v3/examples?before=bar&amp;pageSize=25" }
+    },
+    "_type": "Collection",
+    "total": 27,
+    "pageSize": 25,
+    "count": 2,
+    "offset": 25,
+    "_embedded": {
+        "elements": [
+            { "foo": "bar" },
+            { "foo": "baz" }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="cursor-based-pagination-apiv3examplesbeforeafterpagesize" class="anchor" href="#cursor-based-pagination-apiv3examplesbeforeafterpagesize" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cursor based pagination [/api/v3/examples{?before,after,pageSize}]</h2>
+
+<p>Cursor based pagination is intended to be used, when the client needs a consistent and complete (sub-) range of the collection,
+e.g. in infinite scrolling scenarios. In cursor based pagination the client will receive a link to the next and
+the previous page in the result set. The guarantee is, that the boundaries of that page will align with the boundaries of the current page,
+regardless of changes to the collection.</p>
+
+<p>The drawback for cursor based pagination is, that it is not immediately determinable how many "next" and how many "previous" pages there are.
+Cursor based pagination is therefore less suited for use cases where you want to directly "jump" to an arbitrary page.</p>
+
+<h2>
+<a id="view-cursor-based-get" class="anchor" href="#view-cursor-based-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>view cursor based [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li><p>before (optional, string, <code>bar</code>) ... Display the elements preceding the given element.
+Note that the value of this parameter is very specific to the collection, a client should not
+try to infer values, but use the <strong>previous</strong> link offered by the collection.</p></li>
+<li><p>after (optional, string, <code>buz</code>) ... Display the elements succeeding the given element.
+Note that the value of this parameter is very specific to the collection, a client should not
+try to infer values, but use the <strong>next</strong> link offered by the collection.</p></li>
+<li><p>pageSize (optional, integer, <code>25</code>) ... Number of elements to display per page.</p></li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/examples?after=buz&amp;pageSize=25" },
+        "changeSize": {
+            "href": "/api/v3/examples?after=buz&amp;pageSize={size}",
+            "templated": true
+        },
+        "previousByCursor": { "href": "/api/v3/examples?before=bar&amp;pageSize=25" }
+    },
+    "_type": "Collection",
+    "total": 27,
+    "pageSize": 25,
+    "count": 2,
+    "_embedded": {
+        "elements": [
+            { "foo": "bar" },
+            { "foo": "baz" }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-activities" class="anchor" href="#group-activities" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Activities</h1>
+
+<h2>
+<a id="properties-1" class="anchor" href="#properties-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Activity id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">version</td>
+<td>Activity version</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">comment</td>
+<td></td>
+<td>Formatable</td>
+<td></td>
+<td>READ / WRITE</td>
+</tr>
+<tr>
+<td align="center">details</td>
+<td></td>
+<td>Array of Formatable</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">createdAt</td>
+<td>Time of creation</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<p>Activity can be either _type Activity or _type Activity::Comment.</p>
+
+<h2>
+<a id="activity-apiv3activitiesid" class="anchor" href="#activity-apiv3activitiesid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Activity [/api/v3/activities/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Activity::Comment",
+    "_links": {
+        "self": {
+            "href": "/api/v3/activity/1",
+            "title": "Priority changed from High to Low"
+        },
+        "workPackage": {
+            "href": "/api/v3/work_packages/1",
+            "title": "quis numquam qui voluptatum quia praesentium blanditiis nisi"
+        },
+        "user": {
+            "href": "/api/v3/users/1",
+            "title": "John Sheppard - admin"
+        }
+    },
+    "id": 1,
+    "details": [
+        {
+            "format": "textile",
+            "raw": "Lorem ipsum dolor sit amet.",
+            "html": "&lt;p&gt;Lorem ipsum dolor sit amet.&lt;/p&gt;"
+        }
+    ],
+    "comment": {
+        "format": "textile",
+        "raw": "Lorem ipsum dolor sit amet.",
+        "html": "&lt;p&gt;Lorem ipsum dolor sit amet.&lt;/p&gt;"
+    },
+    "createdAt": "2014-05-21T08:51:20Z",
+    "version": 31
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-activity-get" class="anchor" href="#view-activity-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View activity [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Activity id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Activity][]</p>
+</li>
+</ul>
+
+<h2>
+<a id="update-activity-patch" class="anchor" href="#update-activity-patch" aria-hidden="true"><span class="octicon octicon-link"></span></a>Update activity [PATCH]</h2>
+
+<p>Updates an activity's comment and, on success, returns the updated activity.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Activity id</li>
+</ul>
+</li>
+<li>
+<p>Request (application/json)</p>
+
+<pre><code>{
+  "comment": { "raw": "The updated comment" }
+}
+</code></pre>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Activity][]</p>
+</li>
+<li>
+<p>Response 400 (application/hal+json)</p>
+
+<p>Occurs when the client did not send a valid JSON object in the request body.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InvalidRequestBody",
+    "message": "The request body was not a single JSON object."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> edit journals</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to edit the comment of this journal entry."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 422 (application/hal+json)</p>
+
+<p>Returned if the client tries to modify a read-only property.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:PropertyIsReadOnly",
+    "message": "The ID of an activity can't be changed."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-attachments" class="anchor" href="#group-attachments" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Attachments</h1>
+
+<h2>
+<a id="properties-2" class="anchor" href="#properties-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Attachment's id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">fileName</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">diskFileName</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">description</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">contentType</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">digest</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">downloads</td>
+<td></td>
+<td>Integer</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">createdAt</td>
+<td>Time of creation</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="attachment-apiv3attachmentsid" class="anchor" href="#attachment-apiv3attachmentsid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Attachment [/api/v3/attachments/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Attachment",
+    "_links": {
+        "self": {
+            "href": "/api/v3/attachments/1",
+            "title": "dolor_sit_amet"
+        },
+        "workPackage" {
+            "href": "/api/v3/work_packages/1",
+            "title": "Lorem ipsum"
+        },
+        "author": {
+            "href": "/api/v3/users/1",
+            "title": "John Sheppard - admin"
+        }
+    },
+    "id": 1,
+    "fileName": "dolor_sit_amet",
+    "diskFileName": "dolor_sit_amet",
+    "description": "Lorem ipsum dolor sit amet consecetur elis.",
+    "filesize": 24,
+    "contentType": "application/binary",
+    "digest": "",
+    "downloads": 0,
+    "createdAt": "2014-05-21T08:51:20Z"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-attachment-get" class="anchor" href="#view-attachment-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View attachment [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Attachment id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Attachment][]</p>
+</li>
+</ul>
+
+<h1>
+<a id="group-categories" class="anchor" href="#group-categories" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Categories</h1>
+
+<h2>
+<a id="linked-properties" class="anchor" href="#linked-properties" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linked Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>This category</td>
+<td>Category</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">project</td>
+<td>The project of this category</td>
+<td>Project</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">defaultAssignee</td>
+<td>Default assignee for work packages of this category</td>
+<td>User</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="properties-3" class="anchor" href="#properties-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Category id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td>Category name</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="categories-by-project-apiv3projectsproject_idcategories" class="anchor" href="#categories-by-project-apiv3projectsproject_idcategories" aria-hidden="true"><span class="octicon octicon-link"></span></a>Categories by Project [/api/v3/projects/{project_id}/categories]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/projects/11/categories" }
+    },
+    "total": 2,
+    "count": 2,
+    "_type": "Collection",
+    "_embedded":
+    {
+        "elements": [
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/categories/10" },
+                    "project": { "href": "/api/v3/projects/11" },
+                    "defaultAssignee": { "href": "/api/v3/users/42" }
+                },
+                "_type": "Category",
+                "id": 10,
+                "name": "Foo"
+            },
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/categories/11" },
+                    "project": { "href": "/api/v3/projects/11" }
+                },
+                "_type": "Category",
+                "id": 11,
+                "name": "Bar"
+            }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="list-categories-of-a-project-get" class="anchor" href="#list-categories-of-a-project-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>List categories of a project [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>project_id (required, integer, <code>1</code>) ... ID of the project whoose categories will be listed</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Categories by Project][]</p>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the project does not exist or the client does not have sufficient permissions
+to see it.</p>
+
+<p><strong>Required permission:</strong> view project</p>
+
+<p><em>Note: A client without sufficient permissions shall not be able to test for the existence of a project.
+Thatswhy a 404 is returned here, even if a 403 might be more appropriate.</em></p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified project does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="category-apiv3categoriesid" class="anchor" href="#category-apiv3categoriesid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Category [/api/v3/categories/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/categories/10" },
+        "project": { "href": "/api/v3/projects/11" },
+        "defaultAssignee": { "href": "/api/v3/users/42" }
+    },
+    "_type": "Category",
+    "id": 10,
+    "name": "Foo"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-category-get" class="anchor" href="#view-category-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View Category [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... category id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Category][]</p>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the category does not exist or the client does not have sufficient permissions
+to see it.</p>
+
+<p><strong>Required permission:</strong> view project (defining the category)</p>
+
+<p><em>Note: A client without sufficient permissions shall not be able to test for the existence of
+a category. Thatswhy a 404 is returned here, even if a 403 might be more appropriate.</em></p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified category does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-forms" class="anchor" href="#group-forms" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Forms</h1>
+
+<p>This API provides forms as a concept to aid in editing or creating resources. The goal of forms is to:</p>
+
+<ul>
+<li>make writable properties of a resource discoverable</li>
+<li>show to which values a property can be set</li>
+<li>validate changes to a resource and indicate validation errors</li>
+</ul>
+
+<p>These benefits aside, a client can freely choose to immediately edit a resource without prior validation by a form.
+In the case of an invalid request the edit will fail and return appropriate errors nevertheless.</p>
+
+<p>A form is associated to a single resource and aids in performing changes on that resource.
+When posting to a form endpoint with an empty request body or an empty JSON object,
+you will receive an initial form for the associated resource.
+Subsequent calls to the form should contain a single JSON object as described by the form.</p>
+
+<h2>
+<a id="actions" class="anchor" href="#actions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actions:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">validate</td>
+<td>Validate changes, show errors and allowed values for changed resource</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">commit</td>
+<td>Actually perform changes to the resource</td>
+<td>form content is valid</td>
+</tr>
+<tr>
+<td align="center">previewMarkup</td>
+<td>Post markup (e.g. textile) here to receive an HTML-rendered response</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="embedded-properties" class="anchor" href="#embedded-properties" aria-hidden="true"><span class="octicon octicon-link"></span></a>Embedded Properties:</h2>
+
+<p>Forms contain exactly three embedded properties:</p>
+
+<ul>
+<li><code>payload</code></li>
+<li><code>schema</code></li>
+<li><code>validationErrors</code></li>
+</ul>
+
+<p>Their purpose is explained below.</p>
+
+<h3>
+<a id="payload" class="anchor" href="#payload" aria-hidden="true"><span class="octicon octicon-link"></span></a>Payload</h3>
+
+<p>The payload contains an edited version of the resource that will be modified when commiting the form.
+This representation contains all writable properties of the resource and reflects all changes that the latest call to <strong>validate</strong> included,
+thereby acting as a preview for the changes.</p>
+
+<p>In case the client tries to set the value to something invalid, the invalid change is also reflected here. However a validation error (see below)
+indicates that a commit of this payload would fail.</p>
+
+<p>It might happen that setting one property affects the allowed values for another property. Thus by changing a property A
+the current value of another property B might become invalid. If the client did not yet touch the value of B, the payload will
+contain a default value for that property. Nevertheless the client will also receive an apropriate validation error for value B.</p>
+
+<p>The content of this element <em>can</em> be used as a template for the request body of a call to <strong>validate</strong> or <strong>commit</strong>.</p>
+
+<h3>
+<a id="schema" class="anchor" href="#schema" aria-hidden="true"><span class="octicon octicon-link"></span></a>Schema</h3>
+
+<p>The schema provides more detailed information about the properties of a resource.
+Technically <code>schema</code> is a dictionary containing names of properties as keys
+and objects describing the corresponding property as values. The values are called <strong>field schema</strong>.</p>
+
+<h4>
+<a id="field-schema" class="anchor" href="#field-schema" aria-hidden="true"><span class="octicon octicon-link"></span></a>Field schema</h4>
+
+<p><strong>Linked Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">allowedValues</td>
+<td>List of resources that are assignable by the current user.</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">type</td>
+<td>The data type of the properties values</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">required</td>
+<td>If true every request <strong>must</strong> contain this property</td>
+<td>false</td>
+</tr>
+<tr>
+<td align="center">writable</td>
+<td>If false it is not allowed to <strong>change</strong> the properties value</td>
+<td>true</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>Remarks</strong></p>
+
+<p>The <code>allowedValues</code> can either contain a list of canonical links or just a single link to a collection resource.
+This is an optimization to allow efficient handling of both small resource lists (that be be enumerated inline) and large
+resource lists (requiring one or more separate requests).</p>
+
+<p>A call to <strong>validate</strong> and <strong>commit</strong> does not need to include all properties that were defined in the <code>payload</code> section.
+It is only necessary to include the properties that you want to change and the properties that are defined as <strong>required</strong>
+by the field schema. However you <em>may</em> include all the properties sent in the <code>payload</code> section.</p>
+
+<h3>
+<a id="validation-errors" class="anchor" href="#validation-errors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Validation Errors</h3>
+
+<p>Like <code>schema</code> the validation errors build a dictionary where the key is a property name.
+Each value is an error object that indicates the error that occured validating the corresponding property.
+There are only key value pairs for properties that failed validation, the element is empty if all validations succeeded.</p>
+
+<p>However note that even in the case of validation errors, the response you receive from the form endpoint will be an HTTP 200.
+That is because the main purpose of a form is helping the client to sort out validation errors.</p>
+
+<h2>
+<a id="example-form-apiv3exampleform" class="anchor" href="#example-form-apiv3exampleform" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example Form [/api/v3/example/form]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/example/form" },
+        "validate": {
+            "href": "/api/v3/example/form",
+            "method": "POST"
+        },
+        "previewMarkup": {
+            "href": "/api/v3/render/textile",
+            "method": "POST"
+        },
+        "commit": {
+            "href": "/api/v3/example",
+            "method": "PATCH"
+        }
+    },
+
+    "_type": "Form",
+
+    "_embedded": {
+        "payload": {
+            "_links": {
+                "status": { "href": "/api/v3/statuses/1" }
+            },
+            "_type": "Example",
+            "lockVersion": 5,
+            "subject": "An example title"
+        },
+        "schema": {
+            "lockVersion": {
+                "type": "Integer",
+                "required": true,
+                "writable": false
+            },
+            "_type": {
+                "type": "MetaType",
+                "required": true,
+                "writable": false
+            },
+            "subject": {
+                "type": "String"
+            },
+            "status": {
+                "_links": {
+                    "allowedValues": [
+                        { "href": "/api/v3/statuses/1", "title": "New" },
+                        { "href": "/api/v3/statuses/2", "title": "Closed" }
+                    ]
+                },
+
+                "type": "Status",
+
+                "_embedded": {
+                    "allowedValues": [
+                        {
+                            "_links": { "self": { "href": "/api/v3/statuses/1" } },
+                            "_type": "Status",
+                            "id": 1,
+                            "name": "New",
+                            "position": 1,
+                            "isDefault": true,
+                            "isClosed": false,
+                            "defaultDoneRatio": 0,
+                            "createdAt": "2014-05-21T08:51:20Z",
+                            "updatedAt": "2014-05-21T09:12:00Z"
+                        },
+                        {
+                            "_links": { "self": { "href": "/api/v3/statuses/2" } },
+                            "_type": "Status",
+                            "id": 2,
+                            "name": "Closed",
+                            "position": 2,
+                            "isDefault": false,
+                            "isClosed": true,
+                            "defaultDoneRatio": 100,
+                            "createdAt": "2014-05-21T08:51:20Z",
+                            "updatedAt": "2014-05-21T09:12:00Z"
+                        }
+                    ]
+                }
+            }
+        },
+        "validationErrors": {
+            "subject": {
+                "_type": "Error",
+                "errorIdentifier": "urn:openproject-org:api:v3:errors:BadExampleError",
+                "message": "For the purpose of this example we need a validation error. The remainder of the response pretends there were no errors."
+            }
+        }
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="show-or-validate-form-post" class="anchor" href="#show-or-validate-form-post" aria-hidden="true"><span class="octicon octicon-link"></span></a>show or validate form [POST]</h2>
+
+<p>This is an example of how a form might look like. Note that this endpoint does not exist in the actual implementation.</p>
+
+<ul>
+<li>
+<p>Request (application/json)</p>
+
+<pre><code>{
+    "lockVersion": 5,
+    "_type": "Example",
+    "subject": "An example title"
+}
+</code></pre>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Example Form][]</p>
+</li>
+<li>
+<p>Response 400 (application/hal+json)</p>
+
+<p>Occurs when the client did not send a valid JSON object in the request body and the request body
+was not empty.</p>
+
+<p>Note that this error only occurs when the content is not at all a single JSON object.
+It <strong>does not occur</strong> for requests containing undefined properties or invalid property values.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InvalidRequestBody",
+    "message": "The request body was neither empty, nor did it contain a single JSON object."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions to modify the associated resource.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to edit example resources."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 409 (application/hal+json)</p>
+
+<p>Returned if underlying resource was changed since the client requested the form. This is determined using the <code>lockVersion</code> property.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:UpdateConflict",
+    "message": "The resource you are about to edit was changed in the meantime."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-previewing" class="anchor" href="#group-previewing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Previewing</h1>
+
+<p>Throughout OpenProject user input for many properties can be formatted (e.g. using <em>Textile</em>).
+Using the apropriate rendering endpoint it is possible to render custom formatted inputs into HTML and thus
+receive a preview of the rendered text.</p>
+
+<p>The request to a rendering endpoint should always have a MIME-Type of <code>text/plain</code>.
+The request body is the actual string that shall be rendered as HTML string.</p>
+
+<h2>
+<a id="textile-apiv3rendertextilecontext" class="anchor" href="#textile-apiv3rendertextilecontext" aria-hidden="true"><span class="octicon octicon-link"></span></a>Textile [/api/v3/render/textile{?context}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>&lt;p&gt;Hello world! &lt;a href="http://example.com"&gt;This&lt;/a&gt; &lt;strong&gt;is&lt;/strong&gt; textile!&lt;/p&gt;
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="preview-textile-document-post" class="anchor" href="#preview-textile-document-post" aria-hidden="true"><span class="octicon octicon-link"></span></a>Preview Textile document [POST]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>
+<p>context (optional, string, <code>/api/v3/work_packages/42</code>)
+API-Link to the context in which the rendering occurs, for example a specific work package.</p>
+
+<p>If left out only context-agnostic rendering takes place.
+Please note that OpenProject features textile-extensions that can only work given a context (e.g. display attached images).</p>
+
+<p><strong>Supported contexts:</strong></p>
+
+<ul>
+<li>
+<code>/api/v3/work_packages/{id}</code> - an existing work package</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Request (text/plain)</p>
+
+<pre><code>    Hello world! "This":http://example.com *is* textile!
+</code></pre>
+</li>
+<li>
+<p>Response 200 (text/html)</p>
+
+<p>[Textile][]</p>
+</li>
+<li>
+<p>Response 400 (application/json)</p>
+
+<p>Returned if the context passed by the client is not valid (e.g. unknown).</p>
+
+<p>Note that this response will also occur when the requesting user
+is not allowed to see the context resource (e.g. limited work package visibility).</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InvalidRenderContext",
+    "message": "Could not render textile string in the given context."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="plain-text-apiv3renderplain" class="anchor" href="#plain-text-apiv3renderplain" aria-hidden="true"><span class="octicon octicon-link"></span></a>Plain Text [/api/v3/render/plain]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>&lt;p&gt;Hello world! This *is* plain text!&lt;/p&gt;
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="preview-plain-document-post" class="anchor" href="#preview-plain-document-post" aria-hidden="true"><span class="octicon octicon-link"></span></a>Preview plain document [POST]</h2>
+
+<ul>
+<li>
+<p>Request (text/plain)</p>
+
+<pre><code>    Hello world! This *is* plain text!
+</code></pre>
+</li>
+<li>
+<p>Response 200 (text/html)</p>
+
+<p>[Plain Text][]</p>
+</li>
+</ul>
+
+<h1>
+<a id="group-priorities" class="anchor" href="#group-priorities" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Priorities</h1>
+
+<h2>
+<a id="linked-properties-1" class="anchor" href="#linked-properties-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linked Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>This priority</td>
+<td>Priority</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="properties-4" class="anchor" href="#properties-4" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Priority id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td>Priority name</td>
+<td>String</td>
+<td>not empty</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">position</td>
+<td>Sort index of the priority</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isDefault</td>
+<td>Indicates whether this is the default value</td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isActive</td>
+<td>Indicates whether the priority is available</td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="priorities-apiv3priorities" class="anchor" href="#priorities-apiv3priorities" aria-hidden="true"><span class="octicon octicon-link"></span></a>Priorities [/api/v3/priorities]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/priorities" }
+    },
+    "total": 5,
+    "count": 5,
+    "_type": "Collection",
+    "_embedded":
+    {
+        "elements": [
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/priorities/1" }
+                },
+                "_type": "Priority",
+                "id": 1,
+                "name": "Low",
+                "position": 1
+            },
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/priorities/2" }
+                },
+                "_type": "Priority",
+                "id": 2,
+                "name": "Normal",
+                "position": 2
+            },
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/priorities/3" }
+                },
+                "_type": "Priority",
+                "id": 3,
+                "name": "High",
+                "position": 3
+            },
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/priorities/4" }
+                },
+                "_type": "Priority",
+                "id": 4,
+                "name": "Urgent",
+                "position": 4
+            },
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/priorities/5" }
+                },
+                "_type": "Priority",
+                "id": 5,
+                "name": "Immediate",
+                "position": 5
+            }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="list-all-priorities-get" class="anchor" href="#list-all-priorities-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>List all Priorities [GET]</h2>
+
+<ul>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Priorities][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work package (on any project)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see the priorities."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="priority-apiv3prioritiesid" class="anchor" href="#priority-apiv3prioritiesid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Priority [/api/v3/priorities/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/priorities/1" }
+    },
+    "_type": "Priority",
+    "id": 1,
+    "name": "Low",
+    "position": 1
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-priority-get" class="anchor" href="#view-priority-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>view Priority [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Priority id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Priority][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work package (on any project)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see this priority."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-projects" class="anchor" href="#group-projects" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Projects</h1>
+
+<h2>
+<a id="linked-properties-2" class="anchor" href="#linked-properties-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linked Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>This project</td>
+<td>Project</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">categories</td>
+<td>Categories available in this project</td>
+<td>Categories</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">types</td>
+<td>Types available in this project</td>
+<td>Types</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">versions</td>
+<td>Versions available in this project</td>
+<td>Versions</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="properties-5" class="anchor" href="#properties-5" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Projects's id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">identifier</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">description</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">homepage</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">createdAt</td>
+<td>Time of creation</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">updatedAt</td>
+<td>Time of the most recent change to the project</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="project-apiv3projectsid" class="anchor" href="#project-apiv3projectsid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project [/api/v3/projects/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Project",
+    "_links": {
+        "self": {
+            "href": "/api/v3/projects/1",
+            "title": "Lorem"
+        },
+        "categories": { "href": "/api/v3/projects/1/categories" },
+        "types": { "href": "/api/v3/projects/1/types" },
+        "versions": { "href": "/api/v3/projects/1/versions" }
+    },
+    "id": 1,
+    "identifier": "project_identifier",
+    "name": "Project example",
+    "description": "Lorem ipsum dolor sit amet",
+    "homepage": "http://openproject.com",
+    "createdOn": "2014-05-21T08:51:20Z",
+    "updatedOn": "2014-05-21T08:51:20Z"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-project-get" class="anchor" href="#view-project-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View project [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Project id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Project][]</p>
+</li>
+</ul>
+
+<h2>
+<a id="projects-by-version-apiv3versionsidprojects" class="anchor" href="#projects-by-version-apiv3versionsidprojects" aria-hidden="true"><span class="octicon octicon-link"></span></a>Projects by version [/api/v3/versions/{id}/projects]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links":
+    {
+        "self":
+        {
+            "href": "/api/v3/versions/2/projects"
+        }
+    },
+    "total": 1,
+    "count": 1,
+    "_type": "Collection",
+    "_embedded":
+    {
+        "elements": [
+            {
+                "_type": "Project",
+                "_links": {
+                    "self": {
+                        "href": "/api/v3/projects/1",
+                        "title": "Lorem"
+                    },
+                    "categories": { "href": "/api/v3/projects/1/categories" },
+                    "versions": { "href": "/api/v3/projects/1/versions" }
+                },
+                "id": 1,
+                "identifier": "project_identifier",
+                "name": "Project example",
+                "description": "Lorem ipsum dolor sit amet",
+                "homepage": "http://openproject.com",
+                "createdOn": "2014-05-21T08:51:20Z",
+                "updatedOn": "2014-05-21T08:51:20Z"
+            }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="list-projects-with-version-get" class="anchor" href="#list-projects-with-version-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>List projects with version [GET]</h2>
+
+<p>This endpoint lists the projects where the given version is available.</p>
+
+<p>The projects returned depend on the sharing settings of the given version,
+but are also limited to the projects that the current user is allowed to see.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Version id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Projects by version][]</p>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the version does not exist or the client does not have sufficient permissions
+to see it.</p>
+
+<p><strong>Required permission:</strong> view work packages <strong>or</strong> manage versions (any project where the given version is available)</p>
+
+<p><em>Note: A client without sufficient permissions shall not be able to test for the existence of a version.
+That's why a 404 is returned here, even if a 403 might be more appropriate.</em></p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified version does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-queries" class="anchor" href="#group-queries" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Queries</h1>
+
+<h2>
+<a id="properties-6" class="anchor" href="#properties-6" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Query id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td>Query name</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">filters</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isPublic</td>
+<td></td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">columnNames</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">sortCriteria</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">groupBy</td>
+<td></td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">displaySums</td>
+<td></td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isStarred</td>
+<td></td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="query-apiv3queriesid" class="anchor" href="#query-apiv3queriesid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Query [/api/v3/queries/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Query",
+    "_links": {
+        "self": {
+            "href": "/api/v3/queries/2",
+            "title": "My work packages"
+        },
+        "project": {
+            "href": "/api/v3/projects/1",
+            "title": "Lorem ipsum"
+        },
+        "user": {
+            "href": "/api/v3/users/1",
+            "title": "John Sheppard - admin"
+        }
+    },
+    "id": 2,
+    "name": "My work packages",
+    "filters": [
+        {
+            "status_id": {
+                "operator": "o",
+                "values": null
+            }
+        },
+        {
+            "assigned_to_id": {
+                "operator": "=",
+                "values": [
+                    "me"
+                ]
+            }
+        }
+    ],
+    "isPublic": "false",
+    "columnNames": [
+        "type",
+        "status",
+        "priority",
+        "subject",
+        "assigned_to"
+    ],
+    "sortCriteria": [
+        [
+            "parent",
+            "desc"
+        ]
+    ],
+    "groupBy": null,
+    "displaySums": "false",
+    "isStarred": true
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-query-get" class="anchor" href="#view-query-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View query [GET]</h2>
+
+<p><strong>NOT IMPLEMENTED</strong></p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Query id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Query][]</p>
+</li>
+</ul>
+
+<h2>
+<a id="star-query-apiv3queriesidstar" class="anchor" href="#star-query-apiv3queriesidstar" aria-hidden="true"><span class="octicon octicon-link"></span></a>Star Query [/api/v3/queries/{id}/star]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Query",
+    "_links": {
+        "self": {
+            "href": "/api/v3/queries/2",
+            "title": "My work packages"
+        },
+        "project": {
+            "href": "/api/v3/projects/1",
+            "title": "Lorem ipsum"
+        },
+        "user": {
+            "href": "/api/v3/users/1",
+            "title": "John Sheppard - admin"
+        }
+    },
+    "id": 2,
+    "name": "My work packages",
+    "filters": [
+        {
+            "status_id": {
+                "operator": "o",
+                "values": null
+            }
+        },
+        {
+            "assigned_to_id": {
+                "operator": "=",
+                "values": [
+                    "me"
+                ]
+            }
+        }
+    ],
+    "isPublic": "false",
+    "columnNames": [
+        "type",
+        "status",
+        "priority",
+        "subject",
+        "assigned_to"
+    ],
+    "sortCriteria": [
+        [
+            "parent",
+            "desc"
+        ]
+    ],
+    "groupBy": null,
+    "displaySums": "false",
+    "isStarred": true
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="star-query-patch" class="anchor" href="#star-query-patch" aria-hidden="true"><span class="octicon octicon-link"></span></a>Star query [PATCH]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Query id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Star Query][]</p>
+</li>
+<li>
+<p>Response 400 (application/hal+json)</p>
+
+<p>Occurs when the client did not send an empty request body.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InvalidRequestBody",
+    "message": "The request body was not empty."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="unstar-query-apiv3queriesidunstar" class="anchor" href="#unstar-query-apiv3queriesidunstar" aria-hidden="true"><span class="octicon octicon-link"></span></a>Unstar Query [/api/v3/queries/{id}/unstar]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Query",
+    "_links": {
+        "self": {
+            "href": "/api/v3/queries/2",
+            "title": "My work packages"
+        },
+        "project": {
+            "href": "/api/v3/projects/1",
+            "title": "Lorem ipsum"
+        },
+        "user": {
+            "href": "/api/v3/users/1",
+            "title": "John Sheppard - admin"
+        }
+    },
+    "id": 2,
+    "name": "My work packages",
+    "filters": [
+        {
+            "status_id": {
+                "operator": "o",
+                "values": null
+            }
+        },
+        {
+            "assigned_to_id": {
+                "operator": "=",
+                "values": [
+                    "me"
+                ]
+            }
+        }
+    ],
+    "isPublic": "false",
+    "columnNames": [
+        "type",
+        "status",
+        "priority",
+        "subject",
+        "assigned_to"
+    ],
+    "sortCriteria": [
+        [
+            "parent",
+            "desc"
+        ]
+    ],
+    "groupBy": null,
+    "displaySums": "false",
+    "isStarred": "false"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="unstar-query-patch" class="anchor" href="#unstar-query-patch" aria-hidden="true"><span class="octicon octicon-link"></span></a>Unstar query [PATCH]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Query id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Unstar Query][]</p>
+</li>
+<li>
+<p>Response 400 (application/hal+json)</p>
+
+<p>Occurs when the client did not send an empty request body.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InvalidRequestBody",
+    "message": "The request body was not empty."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-statuses" class="anchor" href="#group-statuses" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Statuses</h1>
+
+<h2>
+<a id="linked-properties-3" class="anchor" href="#linked-properties-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linked Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>This status</td>
+<td>Status</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="properties-7" class="anchor" href="#properties-7" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Status id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td>Status name</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">position</td>
+<td>Sort index of the status</td>
+<td>Integer</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isDefault</td>
+<td></td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isClosed</td>
+<td>are tickets of this status considered closed?</td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">defaultDoneRatio</td>
+<td>The percentageDone being applied when changing to this status</td>
+<td>Integer</td>
+<td>0 &lt;= x &lt;= 100</td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="statuses-apiv3statuses" class="anchor" href="#statuses-apiv3statuses" aria-hidden="true"><span class="octicon octicon-link"></span></a>Statuses [/api/v3/statuses]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links":
+    {
+        "self":
+        {
+            "href": "/api/v3/statuses"
+        }
+    },
+    "total": 6,
+    "count": 6,
+    "_type": "Collection",
+    "_embedded":
+    {
+        "elements": [
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/statuses/1"
+                    }
+                },
+                "_type": "Status",
+                "id": 1,
+                "name": "New",
+                "position": 1,
+                "isDefault": true,
+                "isClosed": false,
+                "defaultDoneRatio": 0
+            },
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/statuses/3"
+                    }
+                },
+                "_type": "Status",
+                "id": 3,
+                "name": "Resolved",
+                "position": 3,
+                "isDefault": false,
+                "isClosed": false,
+                "defaultDoneRatio": 75
+            },
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/statuses/4"
+                    }
+                },
+                "_type": "Status",
+                "id": 4,
+                "name": "Feedback",
+                "position": 4,
+                "isDefault": false,
+                "isClosed": false,
+                "defaultDoneRatio": 25
+            },
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/statuses/5"
+                    }
+                },
+                "_type": "Status",
+                "id": 5,
+                "name": "Closed",
+                "position": 5,
+                "isDefault": false,
+                "isClosed": true,
+                "defaultDoneRatio": 100
+            },
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/statuses/6"
+                    }
+                },
+                "_type": "Status",
+                "id": 6,
+                "name": "Rejected",
+                "position": 6,
+                "isDefault": false,
+                "isClosed": true,
+                "defaultDoneRatio": 100
+            },
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/statuses/2"
+                    }
+                },
+                "_type": "Status",
+                "id": 2,
+                "name": "In Progress",
+                "position": 3,
+                "isDefault": false,
+                "isClosed": false,
+                "defaultDoneRatio": 50
+            }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="list-all-statuses-get" class="anchor" href="#list-all-statuses-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>List all Statuses [GET]</h2>
+
+<ul>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Statuses][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work package (on any project)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see the statuses."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="status-apiv3statusesid" class="anchor" href="#status-apiv3statusesid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Status [/api/v3/statuses/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links":
+    {
+        "self":
+        {
+            "href": "/api/v3/statuses/1"
+        }
+    },
+    "_type": "Status",
+    "id": 1,
+    "name": "New",
+    "position": 1,
+    "isDefault": true,
+    "isClosed": false,
+    "defaultDoneRatio": 0
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-status-get" class="anchor" href="#view-status-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View Status [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... status id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Status][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work package (on any project)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see this status."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-types" class="anchor" href="#group-types" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Types</h1>
+
+<h2>
+<a id="linked-properties-4" class="anchor" href="#linked-properties-4" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linked Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>This type</td>
+<td>Type</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="properties-8" class="anchor" href="#properties-8" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Type id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td>Type name</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">color</td>
+<td>The color used to represent this type</td>
+<td>Color</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">position</td>
+<td>Sort index of the type</td>
+<td>Integer</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isDefault</td>
+<td></td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">isMilestone</td>
+<td>Do tickets of this type represent a milestone?</td>
+<td>Boolean</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">createdAt</td>
+<td>Time of creation</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">updatedAt</td>
+<td>Time of the most recent change to the user</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="types-apiv3types" class="anchor" href="#types-apiv3types" aria-hidden="true"><span class="octicon octicon-link"></span></a>Types [/api/v3/types]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links":
+    {
+        "self":
+        {
+            "href": "/api/v3/types"
+        }
+    },
+    "total": 2,
+    "count": 2,
+    "_type": "Collection",
+    "_embedded":
+    {
+        "elements": [
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/types/1"
+                    }
+                },
+                "_type": "Type",
+                "id": 1,
+                "name": "Bug",
+                "color": "#ff0000",
+                "position": 1,
+                "isDefault": true,
+                "isMilestone": false,
+                "createdAt": "2014-05-21T08:51:20Z",
+                "updatedAt": "2014-05-21T08:51:20Z"
+            },
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/types/2"
+                    }
+                },
+                "_type": "Type",
+                "id": 2,
+                "name": "Feature",
+                "color": "#888",
+                "position": 2,
+                "isDefault": false,
+                "isMilestone": false,
+                "createdAt": "2014-05-21T08:51:20Z",
+                "updatedAt": "2014-05-21T08:51:20Z"
+            }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="list-all-types-get" class="anchor" href="#list-all-types-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>List all Types [GET]</h2>
+
+<ul>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Types][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work package or manage types (on any project)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see the types."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="types-by-project-apiv3projectsproject_idtypes" class="anchor" href="#types-by-project-apiv3projectsproject_idtypes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Types by Project [/api/v3/projects/{project_id}/types]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/projects/11/types" }
+    },
+    "total": 2,
+    "count": 2,
+    "_type": "Collection",
+    "_embedded":
+    {
+        "elements": [
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/types/1"
+                    }
+                },
+                "_type": "Type",
+                "id": 1,
+                "name": "Bug",
+                "color": "#ff0000",
+                "position": 1,
+                "isDefault": true,
+                "isMilestone": false,
+                "createdAt": "2014-05-21T08:51:20Z",
+                "updatedAt": "2014-05-21T08:51:20Z"
+            },
+            {
+                "_links":
+                {
+                    "self":
+                    {
+                        "href": "/api/v3/types/2"
+                    }
+                },
+                "_type": "Type",
+                "id": 2,
+                "name": "Feature",
+                "color": "#888",
+                "position": 2,
+                "isDefault": false,
+                "isMilestone": false,
+                "createdAt": "2014-05-21T08:51:20Z",
+                "updatedAt": "2014-05-21T08:51:20Z"
+            }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="list-types-available-in-a-project-get" class="anchor" href="#list-types-available-in-a-project-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>List types available in a project [GET]</h2>
+
+<p>This endpoint lists the types that are <em>available</em> in a given project.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>project_id (required, integer, <code>1</code>) ... ID of the project whoose types will be listed</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Types by Project][]</p>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the project does not exist or the client does not have sufficient permissions
+to see it.</p>
+
+<p><strong>Required permission:</strong> view work packages <strong>or</strong> manage types (on given project)</p>
+
+<p><em>Note: A client without sufficient permissions shall not be able to test for the existence of a project.
+That's why a 404 is returned here, even if a 403 might be more appropriate.</em></p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified project does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="type-apiv3typesid" class="anchor" href="#type-apiv3typesid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Type [/api/v3/types/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links":
+    {
+        "self":
+        {
+            "href": "/api/v3/types/1"
+        }
+    },
+    "_type": "Type",
+    "id": 1,
+    "name": "Bug",
+    "color": "#ff0000",
+    "position": 1,
+    "isDefault": true,
+    "isMilestone": false,
+    "createdAt": "2014-05-21T08:51:20Z",
+    "updatedAt": "2014-05-21T08:51:20Z"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-type-get" class="anchor" href="#view-type-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View Type [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... type id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Type][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work package or manage types (on any project)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see this type."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-users" class="anchor" href="#group-users" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Users</h1>
+
+<h2>
+<a id="properties-9" class="anchor" href="#properties-9" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>User's id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">login</td>
+<td>User's login name</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">firstName</td>
+<td>User's first name</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">lastName</td>
+<td>User's last name</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td>User's full name, formatting depends on instance settings</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">mail</td>
+<td>User's email</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">avatar</td>
+<td>URL to user's avatar</td>
+<td>String</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">createdAt</td>
+<td>Time of creation</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">updatedAt</td>
+<td>Time of the most recent change to the user</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="user-apiv3usersid" class="anchor" href="#user-apiv3usersid" aria-hidden="true"><span class="octicon octicon-link"></span></a>User [/api/v3/users/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "User",
+    "_links": {
+        "self": {
+            "href": "/api/v3/users/1",
+            "title": "John Sheppard - j.sheppard"
+        }
+    },
+    "id": 1,
+    "login": "j.sheppard",
+    "firstName": "John",
+    "lastName": "Sheppard",
+    "mail": "shep@mail.com",
+    "avatar": "https://gravatar/avatar",
+    "createdAt": "2014-05-21T08:51:20Z",
+    "updatedAt": "2014-05-21T08:51:20Z"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-user-get" class="anchor" href="#view-user-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View user [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... User id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[User][]</p>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the user does not exist.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified user does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="delete-user-delete" class="anchor" href="#delete-user-delete" aria-hidden="true"><span class="octicon octicon-link"></span></a>Delete user [DELETE]</h2>
+
+<p>Permanently deletes the specified user account.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... User id</li>
+</ul>
+</li>
+<li>
+<p>Response 202</p>
+
+<p>Returned if the account was deleted successfully.</p>
+
+<p>Note that the response body is empty as of now. In future versions of the API a body
+<em>might</em> be returned, indicating the progress of deletion.</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions or if deletion of users was disabled in the instance wide settings.</p>
+
+<p><strong>Required permission:</strong> Administrators only (exception: users might be able to delete their own accounts)</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to delete the account of this user."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the user does not exist.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified user does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-versions" class="anchor" href="#group-versions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Versions</h1>
+
+<h2>
+<a id="linked-properties-5" class="anchor" href="#linked-properties-5" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linked Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>This version</td>
+<td>Version</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">definingProject</td>
+<td>The project to which the version belongs</td>
+<td>Project</td>
+<td>only present if the project is visible for the current user</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">availableInProjects</td>
+<td>Projects where this version can be used</td>
+<td>Projects</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="properties-10" class="anchor" href="#properties-10" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Version id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">name</td>
+<td>Version name</td>
+<td>String</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">description</td>
+<td></td>
+<td>Formatable</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">startDate</td>
+<td></td>
+<td>Date</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">endDate</td>
+<td></td>
+<td>Date</td>
+<td></td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">status</td>
+<td>The current status of the version</td>
+<td>String</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">createdAt</td>
+<td>Time of creation</td>
+<td>DateTime</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+<tr>
+<td align="center">updatedAt</td>
+<td>Time of the most recent change to the version</td>
+<td>DateTime</td>
+<td>not null</td>
+<td>READ</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="versions-by-project-apiv3projectsproject_idversions" class="anchor" href="#versions-by-project-apiv3projectsproject_idversions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Versions by Project [/api/v3/projects/{project_id}/versions]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/projects/11/versions" }
+    },
+    "total": 3,
+    "count": 3,
+    "_type": "Collection",
+    "_embedded":
+    {
+        "elements": [
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/versions/11" },
+                    "definingProject": { "href": "/api/v3/projects/11" },
+                    "availableInProjects": { "href": "/api/v3/versions/11/projects" }
+                },
+                "_type": "Version",
+                "id": 11,
+                "name": "v3.0 Alpha",
+                "description": {
+                    "format": "plain",
+                    "raw": "This version has a description",
+                    "html": "This version has a description"
+                },
+                "startDate": "2014-11-20",
+                "endDate": null,
+                "status": "Open"
+            },
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/versions/12" },
+                    "definingProject": { "href": "/api/v3/projects/11" },
+                    "availableInProjects": { "href": "/api/v3/versions/12/projects" }
+                },
+                "_type": "Version",
+                "id": 12,
+                "name": "v2.0",
+                "description": {
+                    "format": "plain",
+                    "raw": "",
+                    "html": ""
+                },
+                "startDate": null,
+                "endDate": null,
+                "status": "Closed"
+            },
+            {
+                "_links": {
+                    "self": { "href": "/api/v3/versions/10" },
+                    "definingProject": { "href": "/api/v3/projects/11" },
+                    "availableInProjects": { "href": "/api/v3/versions/10/projects" }
+                },
+                "_type": "Version",
+                "id": 10,
+                "name": "v1.0",
+                "description": {
+                    "format": "plain",
+                    "raw": "",
+                    "html": ""
+                },
+                "startDate": null,
+                "endDate": null,
+                "status": "Open"
+            }
+        ]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="list-versions-available-in-a-project-get" class="anchor" href="#list-versions-available-in-a-project-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>List versions available in a project [GET]</h2>
+
+<p>This endpoint lists the versions that are <em>available</em> in a given project.
+Note that due to sharing this might be more than the versions <em>defined</em> by that project.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>project_id (required, integer, <code>1</code>) ... ID of the project whoose versions will be listed</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Versions by Project][]</p>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the project does not exist or the client does not have sufficient permissions
+to see it.</p>
+
+<p><strong>Required permission:</strong> view work packages <strong>or</strong> manage versions (on given project)</p>
+
+<p><em>Note: A client without sufficient permissions shall not be able to test for the existence of a project.
+That's why a 404 is returned here, even if a 403 might be more appropriate.</em></p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified project does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="version-apiv3versionsid" class="anchor" href="#version-apiv3versionsid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Version [/api/v3/versions/{id}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/versions/11" },
+        "definingProject": { "href": "/api/v3/projects/11" },
+        "availableInProjects": { "href": "/api/v3/versions/11/projects" }
+    },
+    "_type": "Version",
+    "id": 11,
+    "name": "v3.0 Alpha",
+    "description": {
+        "format": "plain",
+        "raw": "This version has a description",
+        "html": "This version has a description"
+    },
+    "startDate": "2014-11-20",
+    "endDate": null,
+    "status": "Open"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-version-get" class="anchor" href="#view-version-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View Version [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... version id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Version][]</p>
+</li>
+<li>
+<p>Response 404 (application/hal+json)</p>
+
+<p>Returned if the version does not exist or the client does not have sufficient permissions
+to see it.</p>
+
+<p><strong>Required permission:</strong> view work packages <strong>or</strong> manage versions (any project where the version is available)</p>
+
+<p><em>Note: A client without sufficient permissions shall not be able to test for the existence of
+a version. That's why a 404 is returned here, even if a 403 might be more appropriate.</em></p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:NotFound",
+    "message": "The specified version does not exist."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h1>
+<a id="group-work-packages" class="anchor" href="#group-work-packages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Group Work packages</h1>
+
+<h2>
+<a id="actions-1" class="anchor" href="#actions-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Actions:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">update</td>
+<td>Form endpoint that aids in preparing and performing edits on a WP</td>
+<td>
+<strong>Permission</strong>: edit work package</td>
+</tr>
+<tr>
+<td align="center">updateImmediately</td>
+<td>Directly perform edits on a work package</td>
+<td>
+<strong>Permission</strong>: edit work package</td>
+</tr>
+<tr>
+<td align="center">watch</td>
+<td>Add current user to WP watchers</td>
+<td>logged in; not watching</td>
+</tr>
+<tr>
+<td align="center">unwatch</td>
+<td>Remove current user from WP watchers</td>
+<td>logged in; watching</td>
+</tr>
+<tr>
+<td align="center">addWatcher</td>
+<td>Add any user to WP watchers</td>
+<td>
+<strong>Permission</strong>: add watcher</td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="linked-properties-6" class="anchor" href="#linked-properties-6" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linked Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Link</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">self</td>
+<td>This work package</td>
+<td>WorkPackage</td>
+<td>not null</td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">author</td>
+<td>The person that created the work package</td>
+<td>User</td>
+<td>not null</td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">assignee</td>
+<td>The person that is intended to work on the work package</td>
+<td>User</td>
+<td></td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">availableWatchers</td>
+<td>All users that can be added to the work package as watchers.</td>
+<td>User</td>
+<td></td>
+<td>READ</td>
+<td>
+<strong>Permission</strong> add work package watchers</td>
+</tr>
+<tr>
+<td align="center">category</td>
+<td>The category of the work package</td>
+<td>Category</td>
+<td></td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">priority</td>
+<td>The priority of the work package</td>
+<td>Priority</td>
+<td>not null</td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">project</td>
+<td>The project to which the work package belongs</td>
+<td>Project</td>
+<td>not null</td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">responsible</td>
+<td>The person that is responsible for the overall outcome</td>
+<td>User</td>
+<td></td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">status</td>
+<td>The current status of the work package</td>
+<td>Status</td>
+<td>not null</td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">timeEntries</td>
+<td>All time entries logged on the work package. Please note that this is a link to an HTML resource for now and as such, the link is subject to change.</td>
+<td>N/A</td>
+<td></td>
+<td>READ</td>
+<td>
+<strong>Permission</strong> view time entries</td>
+</tr>
+<tr>
+<td align="center">type</td>
+<td>The type of the work package</td>
+<td>Type</td>
+<td>not null</td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">version</td>
+<td>The version associated to the work package</td>
+<td>Version</td>
+<td></td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="properties-11" class="anchor" href="#properties-11" aria-hidden="true"><span class="octicon octicon-link"></span></a>Properties:</h2>
+
+<table>
+<thead>
+<tr>
+<th align="center">Property</th>
+<th>Description</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Supported operations</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">id</td>
+<td>Work package id</td>
+<td>Integer</td>
+<td>x &gt; 0</td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">lockVersion</td>
+<td>The version of the item as used for optimistic locking</td>
+<td>Integer</td>
+<td></td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">subject</td>
+<td>Work package subject</td>
+<td>String</td>
+<td>not null; 1 &lt;= length &lt;= 255</td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">type</td>
+<td>Name of the work package's type</td>
+<td>String</td>
+<td>not null</td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">description</td>
+<td>The work package description</td>
+<td>Formatable</td>
+<td></td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">parentId</td>
+<td>Parent work package id</td>
+<td>Integer</td>
+<td>Must be an id of an existing and visible (for the current user) work package</td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">startDate</td>
+<td></td>
+<td>Date</td>
+<td>must be equal or greater than the soonest possible start date</td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">dueDate</td>
+<td></td>
+<td>Date</td>
+<td>must be greater than or equal to the start date</td>
+<td>READ / WRITE</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">estimatedTime</td>
+<td></td>
+<td>Duration</td>
+<td></td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">spentTime</td>
+<td></td>
+<td>Duration</td>
+<td></td>
+<td>READ</td>
+<td>
+<strong>Permission</strong> view time entries</td>
+</tr>
+<tr>
+<td align="center">percentageDone</td>
+<td></td>
+<td>Integer</td>
+<td>0 &lt;= x &lt;= 100</td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">createdAt</td>
+<td>Time of creation</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+<td></td>
+</tr>
+<tr>
+<td align="center">updatedAt</td>
+<td>Time of the most recent change to the work package</td>
+<td>DateTime</td>
+<td></td>
+<td>READ</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h2>
+<a id="workpackage-apiv3work_packagesidnotify" class="anchor" href="#workpackage-apiv3work_packagesidnotify" aria-hidden="true"><span class="octicon octicon-link"></span></a>WorkPackage [/api/v3/work_packages/{id}{?notify}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "WorkPackage",
+    "_links": {
+        "self": {
+            "href": "/api/v3/work_packages/1528",
+            "title": "Develop API"
+        },
+        "update": {
+            "href": "/api/v3/work_packages/1528",
+            "method": "patch",
+            "title": "Update Develop API"
+        },
+        "delete": {
+            "href": "/work_packages/bulk?ids=1528",
+            "method": "delete",
+            "title": "Delete Develop API"
+        },
+        "log_time": {
+            "href": "/work_packages/1528/time_entries/new",
+            "type": "text/html",
+            "title": "Log time on Develop API"
+        },
+        "duplicate": {
+            "href": "/projects/seeded_project/work_packages/new?copy_from=1528",
+            "type": "text/html",
+            "title": "Duplicate Develop API"
+        },
+        "move": {
+            "href": "/work_packages/1528/move/new",
+            "type": "text/html",
+            "title": "Move Develop API"
+        },
+        "author": {
+            "href": "/api/v3/users/1",
+            "title": "OpenProject Admin - admin"
+        },
+        "responsible": {
+            "href": "/api/v3/users/23",
+            "title": "Laron Leuschke - Alaina5788"
+        },
+        "assignee": {
+            "href": "/api/v3/users/11",
+            "title": "Emmie Okuneva - Adele5450"
+        },
+        "priority": {
+            "href": "/api/v3/priorities/2",
+            "title": "Normal"
+        },
+        "project": {
+            "href": "/api/v3/projects/1",
+            "title": "A Test Project"
+        },
+        "status": {
+            "href": "/api/v3/statuses/1",
+            "title": "New"
+        },
+        "type": {
+            "href": "/api/v3/types/1",
+            "title": "New"
+        },
+        "version": {
+            "href": "/api/v3/versions/1"
+        },
+        "availableWatchers": {
+            "href": "/api/v3/work_packages/1528/available_watchers",
+            "title": "Available Watchers"
+        },
+        "watch": {
+            "href": "/api/v3/work_packages/1528/watchers",
+            "method": "post",
+            "data": {
+                "user_id": 1
+            },
+            "title": "Watch work package"
+        },
+        "addWatcher": {
+            "href": "/api/v3/work_packages/1528/watchers{?user_id}",
+            "method": "post",
+            "title": "Add watcher",
+            "templated": true
+        },
+        "addRelation": {
+            "href": "/api/v3/work_packages/1528/relations",
+            "method": "post",
+            "title": "Add relation"
+        },
+        "changeParent": {
+          "href": "/api/v3/work_packages/694",
+          "method": "patch",
+          "title": "Change parent of Bug in OpenProject"
+        },
+        "addComment": {
+            "href": "/api/v3/work_packages/1528/activities",
+            "method": "post",
+            "title": "Add comment"
+        },
+        "parent": {
+            "href": "/api/v3/work_packages/1298",
+            "title": "nisi eligendi officiis eos delectus quis voluptas dolores"
+        },
+        "children": [
+            {
+                "href": "/api/v3/work_packages/1529",
+                "title": "Write API documentation"
+            }
+        ],
+        "timeEntries": {
+            "href": "/work_packages/1528/time_entries",
+            "type": "text/html",
+            "title": "Time entries"
+        }
+    },
+    "id": 1528,
+    "subject": "Develop API",
+    "description": {
+        "format": "textile",
+        "raw": "Develop super cool OpenProject API.",
+        "html": "&lt;p&gt;Develop super cool OpenProject API.&lt;/p&gt;"
+    },
+    "startDate": null,
+    "dueDate": null,
+    "estimatedTime": "PT2H",
+    "percentageDone": 0,
+    "parentId": 1298,
+    "createdAt": "2014-08-29T12:40:53Z",
+    "updatedAt": "2014-08-29T12:44:41Z",
+    "customProperties": [
+        {
+            "name": "velit molestiae",
+            "format": "text",
+            "value": "dolor sit amet"
+        },
+        {
+            "name": "et quam",
+            "format": "text",
+            "value": ""
+        },
+        {
+            "name": "quo deserunt",
+            "format": "text",
+            "value": ""
+        }
+    ]
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="view-work-package-get" class="anchor" href="#view-work-package-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>View work package [GET]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Work package id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[WorkPackage][]</p>
+</li>
+</ul>
+
+<h2>
+<a id="edit-workpackage-patch" class="anchor" href="#edit-workpackage-patch" aria-hidden="true"><span class="octicon octicon-link"></span></a>Edit WorkPackage [PATCH]</h2>
+
+<p>When calling this endpoint the client provides a single object, containing the properties and links that it wants to change, in the body.
+Note that it is only allowed to provide properties or links supporting the <strong>write</strong> operation.</p>
+
+<p>Additionally to the fields the client wants to change, it is mandatory to provide:</p>
+
+<ul>
+<li>The <code>_type</code> which should as of now always be <code>WorkPackage</code>
+</li>
+<li>The value of <code>lockVersion</code> which was received by the <code>GET</code> request this change originates from</li>
+</ul>
+
+<p>The value of <code>lockVersion</code> is used to implement <a href="http://en.wikipedia.org/wiki/Optimistic_concurrency_control">optimistic locking</a>.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li><p>id (required, integer, <code>1</code>) ... Work package id</p></li>
+<li><p>notify = <code>true</code> (optional, boolean, <code>false</code>) ... Indicates whether change notifications (e.g. via E-Mail) should be sent.
+Note that this controls notifications for all users interested in changes to the work package (e.g. watchers, author and assignee),
+not just the current user.</p></li>
+</ul>
+</li>
+<li>
+<p>Request (application/json)</p>
+
+<pre><code>{
+    "_type": "WorkPackage",
+    "lockVersion": 13,
+    "subject": "Lorem"
+    "parentId": "42"
+}
+</code></pre>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[WorkPackage][]</p>
+</li>
+<li>
+<p>Response 400 (application/hal+json)</p>
+
+<p>Occurs when the client did not send a valid JSON object in the request body.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InvalidRequestBody",
+    "message": "The request body was not a single JSON object."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> edit work package</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to edit the content of the work package."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 409 (application/hal+json)</p>
+
+<p>Returned if the resource was changed since the client requested it. This is determined using the <code>lockVersion</code> property.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:UpdateConflict",
+    "message": "Your changes could not be saved, because the work package was changed since you've seen it the last time."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 422 (application/hal+json)</p>
+
+<p>Returned if:</p>
+
+<ul>
+<li>the client tries to modify a read-only property</li>
+<li><p>a constraint for a property was violated</p></li>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:PropertyConstraintViolation",
+    "message": "The subject might not be blank.",
+    "_embedded": {
+        "details": {
+            "attribute": "Subject"
+        }
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="work-package-edit-form-apiv3work_packagesidform" class="anchor" href="#work-package-edit-form-apiv3work_packagesidform" aria-hidden="true"><span class="octicon octicon-link"></span></a>Work Package Edit Form [/api/v3/work_packages/{id}/form]</h2>
+
+<p>This endpoint returns a form to allow a guided modification of an existing work package.</p>
+
+<p>For more details and all possible responses see the general specification of <a href="#forms">Forms</a>.</p>
+
+<h2>
+<a id="workpackage-edit-form-post" class="anchor" href="#workpackage-edit-form-post" aria-hidden="true"><span class="octicon octicon-link"></span></a>WorkPackage Edit Form [POST]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... ID of the work package being modified</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Example Form][]</p>
+</li>
+</ul>
+
+<h2>
+<a id="add-watcher-apiv3work_packageswork_package_idwatchers" class="anchor" href="#add-watcher-apiv3work_packageswork_package_idwatchers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Add Watcher [/api/v3/work_packages/{work_package_id}/watchers]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "User",
+    "_links": {
+        "self": {
+            "href": "/api/v3/users/1",
+            "title": "John Sheppard - j.sheppard"
+        }
+    },
+    "id": 1,
+    "login": "j.sheppard",
+    "firstName": "John",
+    "lastName": "Sheppard",
+    "mail": "shep@mail.com",
+    "avatar": "https://gravatar/avatar",
+    "createdAt": "2014-05-21T08:51:20Z",
+    "updatedAt": "2014-05-21T08:51:20Z"
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="add-watcher-post" class="anchor" href="#add-watcher-post" aria-hidden="true"><span class="octicon octicon-link"></span></a>Add watcher [POST]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>work_package_id (required, integer, <code>1</code>) ... Work package id</li>
+</ul>
+</li>
+<li>
+<p>Request (application/json)</p>
+
+<pre><code>    {
+        "user_id": 1
+    }
+</code></pre>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Add Watcher][]</p>
+</li>
+</ul>
+
+<h2>
+<a id="remove-watcher-apiv3work_packageswork_package_idwatchersid" class="anchor" href="#remove-watcher-apiv3work_packageswork_package_idwatchersid" aria-hidden="true"><span class="octicon octicon-link"></span></a>Remove Watcher [/api/v3/work_packages/{work_package_id}/watchers/{id}]</h2>
+
+<h2>
+<a id="remove-watcher-delete" class="anchor" href="#remove-watcher-delete" aria-hidden="true"><span class="octicon octicon-link"></span></a>Remove watcher [DELETE]</h2>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>work_package_id (required, integer, <code>1</code>) ... Work package id</li>
+<li>id (required, integer, <code>1</code>) ... User id</li>
+</ul>
+</li>
+<li><p>Response 204</p></li>
+</ul>
+
+<h2>
+<a id="available-watchers-apiv3work_packageswork_package_idavailable_watchers" class="anchor" href="#available-watchers-apiv3work_packageswork_package_idavailable_watchers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Available Watchers [/api/v3/work_packages/{work_package_id}/available_watchers]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/work_packages/14/available_watchers" }
+    },
+    "total": 3,
+    "count": 3,
+    "_type": "Collection",
+    "_embedded": {
+      "elements": [
+        {
+            "_type": "User",
+            "_links": {
+                "self": {
+                    "href": "/api/v3/users/4581",
+                    "title": "Mister X"
+                }
+            },
+            "id": 4581,
+            "login": "m@x.org",
+            "firstName": "Mister",
+            "lastName": "X",
+            "name": "Mister X",
+            "mail": "m@x.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-10-01T16:25:17Z",
+            "updatedAt": "2013-10-02T09:33:42Z"
+        },
+        {
+            "_type": "User",
+            "_links": {
+                "self": {
+                    "href": "/api/v3/users/972",
+                    "title": "Mister Y"
+                }
+            },
+            "id": 972,
+            "login": "m@y.org",
+            "firstName": "Mister",
+            "lastName": "Y",
+            "name": "Mister Y",
+            "mail": "m@y.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-01-11T11:47:06Z",
+            "updatedAt": "2013-11-18T07:13:56Z"
+        },
+        {
+            "_type": "User",
+            "_links": {
+                    "self": {
+                        "href": "/api/v3/users/4724",
+                        "title": "Mister Z"
+                    }
+                },
+            "id": 4724,
+            "login": "m@z.org",
+            "firstName": "Mister",
+            "lastName": "Z",
+            "name": "Mister Z",
+            "mail": "m@z.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-10-08T09:28:46Z",
+            "updatedAt": "2013-10-08T09:28:52Z"
+        }]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="available-watchers-get" class="anchor" href="#available-watchers-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>Available watchers [GET]</h2>
+
+<p>Gets a list of users that can watch the work package.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>work_package_id (required, integer, <code>1</code>) ... Work package id</li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Available Watchers][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> add work package watchers</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not authorized to access this resource."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="comment-workpackage-apiv3work_packagesidactivities" class="anchor" href="#comment-workpackage-apiv3work_packagesidactivities" aria-hidden="true"><span class="octicon octicon-link"></span></a>Comment WorkPackage [/api/v3/work_packages/{id}/activities]</h2>
+
+<h2>
+<a id="comment-work-package-post" class="anchor" href="#comment-work-package-post" aria-hidden="true"><span class="octicon octicon-link"></span></a>Comment work package [POST]</h2>
+
+<p>Creates an activity for the selected work package and, on success, returns the
+updated activity.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li>id (required, integer, <code>1</code>) ... Work package id</li>
+</ul>
+</li>
+<li>
+<p>Request (application/json)</p>
+
+<pre><code>{
+  "comment": { "raw": "I think this is awesome!" }
+}
+</code></pre>
+</li>
+<li>
+<p>Response 201 (application/hal+json)</p>
+
+<p>[Activity][]</p>
+</li>
+<li>
+<p>Response 400 (application/hal+json)</p>
+
+<p>Occurs when the client did not send a valid JSON object in the request body.</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:InvalidRequestBody",
+    "message": "The request body was not a single JSON object."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> create journals</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to create a comment here."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="available-assignees-apiv3projectsproject_idwork_packagesavailable_assigneesoffsetpagesizefilter" class="anchor" href="#available-assignees-apiv3projectsproject_idwork_packagesavailable_assigneesoffsetpagesizefilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Available Assignees [/api/v3/projects/{project_id}/work_packages/available_assignees{?offset,pageSize,filter}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/projects/42/work_packages/available_assignees" },
+        "filter": {
+            "href": "/api/v3/projects/42/work_packages/available_assignees?filter={oql}",
+            "templated": true
+        }
+    },
+    "total": 3,
+    "count": 3,
+    "_type": "Collection",
+    "_embedded": {
+      "elements": [
+        {
+            "_type": "User",
+            "_links": {
+                "self": {
+                    "href": "/api/v3/users/4581",
+                    "title": "Mister X"
+                }
+            },
+            "id": 4581,
+            "login": "m@x.org",
+            "firstName": "Mister",
+            "lastName": "X",
+            "name": "Mister X",
+            "mail": "m@x.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-10-01T16:25:17Z",
+            "updatedAt": "2013-10-02T09:33:42Z"
+        },
+        {
+            "_type": "User",
+            "_links": {
+                "self": {
+                    "href": "/api/v3/users/972",
+                    "title": "Mister Y"
+                }
+            },
+            "id": 972,
+            "login": "m@y.org",
+            "firstName": "Mister",
+            "lastName": "Y",
+            "name": "Mister Y",
+            "mail": "m@y.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-01-11T11:47:06Z",
+            "updatedAt": "2013-11-18T07:13:56Z"
+        },
+        {
+            "_type": "User",
+            "_links": {
+                    "self": {
+                        "href": "/api/v3/users/4724",
+                        "title": "Mister Z"
+                    }
+                },
+            "id": 4724,
+            "login": "m@z.org",
+            "firstName": "Mister",
+            "lastName": "Z",
+            "name": "Mister Z",
+            "mail": "m@z.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-10-08T09:28:46Z",
+            "updatedAt": "2013-10-08T09:28:52Z"
+        }]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="available-assignees-get" class="anchor" href="#available-assignees-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>Available assignees [GET]</h2>
+
+<p>Gets a list of users that can be assigned to work packages in the given project.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li><p>project_id (required, integer, <code>1</code>) ... Project id</p></li>
+<li><p>offset = <code>0</code> (optional, integer, <code>25</code>) ... Number of elements to skip before the first element of the response.</p></li>
+<li><p>pageSize (optional, integer, <code>25</code>) ... Number of elements to display per page.</p></li>
+<li><p>filter (optional, string, <code>name == "Karl"</code>) ... An OQL query to specify which subset of users shall be returned</p></li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Available Assignees][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work packages</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see the assignable users for this project."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="available-responsibles-apiv3projectsproject_idwork_packagesavailable_responsiblesoffsetpagesizefilter" class="anchor" href="#available-responsibles-apiv3projectsproject_idwork_packagesavailable_responsiblesoffsetpagesizefilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Available Responsibles [/api/v3/projects/{project_id}/work_packages/available_responsibles{?offset,pageSize,filter}]</h2>
+
+<ul>
+<li>
+<p>Model</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_links": {
+        "self": { "href": "/api/v3/projects/42/work_packages/available_responsibles" },
+        "filter": {
+            "href": "/api/v3/projects/42/work_packages/available_responsibles?filter={oql}",
+            "templated": true
+        }
+    },
+    "total": 3,
+    "count": 3,
+    "_type": "Collection",
+    "_embedded": {
+      "elements": [
+        {
+            "_type": "User",
+            "_links": {
+                "self": {
+                    "href": "/api/v3/users/4581",
+                    "title": "Mister X"
+                }
+            },
+            "id": 4581,
+            "login": "m@x.org",
+            "firstName": "Mister",
+            "lastName": "X",
+            "name": "Mister X",
+            "mail": "m@x.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-10-01T16:25:17Z",
+            "updatedAt": "2013-10-02T09:33:42Z"
+        },
+        {
+            "_type": "User",
+            "_links": {
+                "self": {
+                    "href": "/api/v3/users/972",
+                    "title": "Mister Y"
+                }
+            },
+            "id": 972,
+            "login": "m@y.org",
+            "firstName": "Mister",
+            "lastName": "Y",
+            "name": "Mister Y",
+            "mail": "m@y.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-01-11T11:47:06Z",
+            "updatedAt": "2013-11-18T07:13:56Z"
+        },
+        {
+            "_type": "User",
+            "_links": {
+                    "self": {
+                        "href": "/api/v3/users/4724",
+                        "title": "Mister Z"
+                    }
+                },
+            "id": 4724,
+            "login": "m@z.org",
+            "firstName": "Mister",
+            "lastName": "Z",
+            "name": "Mister Z",
+            "mail": "m@z.org",
+            "avatar": "http://gravatar.com/avatar/12345678901234567890123456789012",
+            "createdAt": "2013-10-08T09:28:46Z",
+            "updatedAt": "2013-10-08T09:28:52Z"
+        }]
+    }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="available-responsibles-get" class="anchor" href="#available-responsibles-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>Available responsibles [GET]</h2>
+
+<p>Gets a list of users that can be assigned as the responsible of a work package in the given project.</p>
+
+<ul>
+<li>
+<p>Parameters</p>
+
+<ul>
+<li><p>project_id (required, integer, <code>1</code>) ... Project id</p></li>
+<li><p>offset = <code>0</code> (optional, integer, <code>25</code>) ... Number of elements to skip before the first element of the response.</p></li>
+<li><p>pageSize (optional, integer, <code>25</code>) ... Number of elements to display per page.</p></li>
+<li><p>filter (optional, string, <code>name == "Karl"</code>) ... An OQL query to specify which subset of users shall be returned</p></li>
+</ul>
+</li>
+<li>
+<p>Response 200 (application/hal+json)</p>
+
+<p>[Available Responsibles][]</p>
+</li>
+<li>
+<p>Response 403 (application/hal+json)</p>
+
+<p>Returned if the client does not have sufficient permissions.</p>
+
+<p><strong>Required permission:</strong> view work packages</p>
+
+<ul>
+<li>
+<p>Body</p>
+
+<pre><code>{
+    "_type": "Error",
+    "errorIdentifier": "urn:openproject-org:api:v3:errors:MissingPermission",
+    "message": "You are not allowed to see the users available as responsible for this project."
+}
+</code></pre>
+</li>
+</ul>
+</li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/jonasheinrich">jonasheinrich</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
