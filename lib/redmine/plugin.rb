@@ -309,6 +309,13 @@ module Redmine #:nodoc:
       end
     end
 
+    # Sets a project module as one of the modules activated by default
+    def define_as_default_project_module
+      unless Setting.default_projects_modules.include? @project_module.to_s
+        Setting.default_projects_modules += [@project_module.to_s]
+      end
+    end
+
     # Defines a project module, that can be enabled/disabled for each project.
     # Permissions defined inside +block+ will be bind to the module.
     #
